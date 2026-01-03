@@ -2,12 +2,16 @@ import axios from 'axios';
 import crypto from 'crypto-js';
 
 export default async function handler(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const { action, accessId, accessSecret, deviceId, code, value } = req.body || {};
     const t = Date.now().toString();
     const baseUrl = "https://openapi.tuyawen.com";
-   
+
     const signRequest = (method, path, body = '', token = '') => {
         const contentHash = crypto.SHA256(body).toString();
         const stringToSign = [method, contentHash, "", path].join("\n");
@@ -22,14 +26,16 @@ export default async function handler(req, res) {
             headers: { 'client_id': accessId, 'sign': tokenSign, 't': t, 'sign_method': 'HMAC-SHA256' }
         });
 
-        // Si l'auth échoue, on renvoie l'erreur exacte de Tuya
-        if (!tokenResponse.data.success) {
-            return res.json({ success: false, msg: "Tuya Refuse l'accès", detail: tokenResponse.data });
+        if (!tokenResponse.data?.success) {
+            return res.json({ success: false, msg: "Auth Failed", detail: tokenResponse.data });
         }
 
         const accessToken = tokenResponse.data.result.access_token;
 
-        let path = (action === 'listDevices') ? "/v1.0/iot-01/associated-users/devices?size=50" : `/v1.0/devices/${deviceId}/commands`;
+        let path = (action === 'listDevices') 
+            ? "/v1.0/iot-01/associated-users/devices?size=50" 
+            : `/v1.0/devices/${deviceId}/commands`;
+        
         let method = (action === 'listDevices') ? "GET" : "POST";
         let body = (action === 'listDevices') ? "" : JSON.stringify({ commands: [{ code, value }] });
 
