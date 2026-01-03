@@ -1,0 +1,151 @@
+switch_led	Boolean	
+"{true,false}"
+work_mode	Enum	
+{
+  "range": [
+    "white",
+    "colour",
+    "scene",
+    "music"
+  ]
+}
+bright_value	Integer	
+{
+  "min": 10,
+  "max": 1000,
+  "scale": 0,
+  "step": 1
+}
+temp_value	Integer	
+{
+  "min": 0,
+  "max": 1000,
+  "scale": 0,
+  "step": 1
+}
+colour_data	Json	
+{}
+scene_data	String	
+{
+  "maxlen": 255
+}
+control_data	String	
+{
+  "maxlen": 255
+}
+brightness_min_1	Integer	
+{
+  "min": 10,
+  "max": 1000,
+  "scale": 0,
+  "step": 1
+}
+led_type_1	Enum	
+{
+  "range": [
+    "led",
+    "incandescent",
+    "halogen"
+  ]
+}
+fan_switch	Boolean	
+"{true,false}"
+fan_speed	Integer	
+{
+  "unit": "",
+  "min": 1,
+  "max": 6,
+  "scale": 0,
+  "step": 1
+}
+fan_direction	Enum	
+{
+  "range": [
+    "forward",
+    "reverse"
+  ]
+}
+countdown_left_fan	Integer	
+{
+  "unit": "min",
+  "min": 0,
+  "max": 540,
+  "scale": 0,
+  "step": 1
+}
+
+
+
+statut 
+
+switch_led	Boolean	
+"{true,false}"
+work_mode	Enum	
+{
+  "range": [
+    "white",
+    "colour",
+    "scene",
+    "music"
+  ]
+}
+bright_value	Integer	
+{
+  "min": 10,
+  "max": 1000,
+  "scale": 0,
+  "step": 1
+}
+temp_value	Integer	
+{
+  "min": 0,
+  "max": 1000,
+  "scale": 0,
+  "step": 1
+}
+colour_data	Json	
+{}
+scene_data	String	
+{
+  "maxlen": 255
+}
+brightness_min_1	Integer	
+{
+  "min": 10,
+  "max": 1000,
+  "scale": 0,
+  "step": 1
+}
+led_type_1	Enum	
+{
+  "range": [
+    "led",
+    "incandescent",
+    "halogen"
+  ]
+}
+fan_switch	Boolean	
+"{true,false}"
+fan_speed	Integer	
+{
+  "unit": "",
+  "min": 1,
+  "max": 6,
+  "scale": 0,
+  "step": 1
+}
+fan_direction	Enum	
+{
+  "range": [
+    "forward",
+    "reverse"
+  ]
+}
+countdown_left_fan	Integer	
+{
+  "unit": "min",
+  "min": 0,
+  "max": 540,
+  "scale": 0,
+  "step": 1
+}
