@@ -6,8 +6,8 @@ export default async function handler(req, res) {
 
     const { action, accessId, accessSecret, deviceId, code, value } = req.body || {};
     const t = Date.now().toString();
-    const baseUrl = "https://openapi.tuyaeu.com";
-
+    const baseUrl = "https://openapi.tuyawen.com";v
+   
     const signRequest = (method, path, body = '', token = '') => {
         const contentHash = crypto.SHA256(body).toString();
         const stringToSign = [method, contentHash, "", path].join("\n");
