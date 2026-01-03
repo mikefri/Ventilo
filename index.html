@@ -1,35 +1,30 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<title>Ventilo Remote</title>
-<meta name="description" content="Contrôle intelligent pour ventilateur Mika - Interface Pro Max">
-
-<meta name="theme-color" content="#4361ee">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MikaVentilo">
-<link rel="apple-touch-icon" href="icon.png">
-
-<link rel="manifest" href="manifest.json">
-
-<link rel="icon" type="image/png" href="icon.png">
-
-<meta property="og:type" content="website">
-<meta property="og:title" content="Mika Ventilo Pro">
-<meta property="og:description" content="L'interface de contrôle ultime pour votre ventilateur intelligent.">
-<meta property="og:image" content="icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ventilo Remote</title>
+    
+    <meta name="description" content="Contrôle intelligent pour ventilateur Mika - Interface Pro Max">
+    <meta name="theme-color" content="#4361ee">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MikaVentilo">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root { --primary: #4361ee; --bg: #f0f4f8; --text: #2b2d42; }
         body { background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 20px 0; }
-        .main-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-radius: 40px; padding: 25px; width: 100%; max-width: 450px; margin: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.4); }
+        .main-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-radius: 40px; padding: 25px; width: 100%; max-width: 450px; margin: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.4); position: relative; }
         
+        /* Bouton Setup discret */
+        .setup-btn { position: absolute; top: 25px; right: 25px; color: #8d99ae; cursor: pointer; z-index: 10; }
+
         .fan-display { height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; }
         .fan-icon { font-size: 3.5rem; color: var(--primary); transition: all 0.5s ease; }
         .spinning { animation: spin linear infinite; }
@@ -41,12 +36,11 @@
         .section-label { font-size: 0.7rem; font-weight: 800; color: #8d99ae; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 15px; display: block; }
         
         .btn-custom, .speed-btn { border-radius: 18px; border: none; font-weight: 700; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); padding: 12px; }
-        .btn-custom:active, .speed-btn:active { transform: scale(0.92); }
         .btn-on { background: var(--primary); color: white; }
         .btn-off { background: #edf2f4; color: #8d99ae; }
         .speed-btn.active { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(67, 97, 238, 0.3); }
 
-        .mode-btn { border-radius: 12px; border: 1px solid #eee; padding: 6px 12px; font-size: 0.75rem; font-weight: 700; background: #f8f9fa; transition: all 0.2s; }
+        .mode-btn { border-radius: 12px; border: 1px solid #eee; padding: 6px 12px; font-size: 0.75rem; font-weight: 700; background: #f8f9fa; }
         .mode-btn.active { background: #ffbe0b; color: white; border-color: #ffbe0b; }
 
         .hidden { display: none !important; }
@@ -56,7 +50,22 @@
 <body>
 
 <div class="container">
+    <div id="setupScreen" class="main-card hidden">
+        <h4 class="fw-bold mb-4 text-center">Configuration Tuya</h4>
+        <div class="mb-3">
+            <label class="form-label small fw-bold">Access ID</label>
+            <input type="text" id="tuya_id" class="form-control rounded-pill">
+        </div>
+        <div class="mb-4">
+            <label class="form-label small fw-bold">Access Secret</label>
+            <input type="password" id="tuya_secret" class="form-control rounded-pill">
+        </div>
+        <button onclick="saveConfig()" class="btn btn-primary w-100 rounded-pill py-3 fw-bold">ENREGISTRER</button>
+    </div>
+
     <div id="controlScreen" class="main-card">
+        <i class="fas fa-cog setup-btn" onclick="showSetup()"></i>
+        
         <div class="fan-display">
             <i id="fanIcon" class="fas fa-fan fan-icon"></i>
             <div id="timerContainer" class="hidden">
@@ -105,10 +114,12 @@
 
         <div class="control-section mb-0">
             <div class="row">
-                <div class="col-6 border-end">
+                <div class="col-6 border-end text-center">
                     <span class="section-label">Rotation</span>
-                    <button onclick="send('fan_direction', 'forward')" class="btn btn-sm btn-outline-primary w-100 mb-1">Été</button>
-                    <button onclick="send('fan_direction', 'reverse')" class="btn btn-sm btn-outline-secondary w-100">Hiver</button>
+                    <div class="d-flex gap-1">
+                        <button onclick="send('fan_direction', 'forward')" class="btn btn-sm btn-outline-primary w-100">Été</button>
+                        <button onclick="send('fan_direction', 'reverse')" class="btn btn-sm btn-outline-secondary w-100">Hiv</button>
+                    </div>
                 </div>
                 <div class="col-6">
                     <span class="section-label">Minuteur</span>
@@ -125,6 +136,17 @@
 </div>
 
 <script>
+    function saveConfig() {
+        localStorage.setItem('tuya_id', document.getElementById('tuya_id').value);
+        localStorage.setItem('tuya_secret', document.getElementById('tuya_secret').value);
+        location.reload();
+    }
+
+    function showSetup() {
+        document.getElementById('controlScreen').classList.add('hidden');
+        document.getElementById('setupScreen').classList.remove('hidden');
+    }
+
     async function apiCall(data) {
         const res = await fetch('/api/control', {
             method: 'POST',
@@ -138,50 +160,37 @@
         const deviceId = document.getElementById('deviceSelect').value;
         if(!deviceId) return;
         
-        // On récupère le schéma et le statut en même temps
         const [schemaData, statusData] = await Promise.all([
             apiCall({ action: 'getSchema', deviceId }),
             apiCall({ action: 'getStatus', deviceId })
         ]);
 
-        // 1. GESTION DE LA VISIBILITÉ DE LA LUMIÈRE
         if(schemaData.success) {
-            const functions = schemaData.result.functions || [];
-            const hasLight = functions.some(f => f.code === 'switch_led');
+            const hasLight = (schemaData.result.functions || []).some(f => f.code === 'switch_led');
             document.getElementById('lightSection').classList.toggle('hidden', !hasLight);
         }
 
-        // 2. MISE À JOUR DES ÉTATS
         if(statusData.success) {
             const states = statusData.result;
-            
-            // Moteur
             const isOn = states.find(s => s.code === 'fan_switch')?.value === true;
             const speed = states.find(s => s.code === 'fan_speed')?.value || 1;
+            const timer = states.find(s => s.code === 'countdown_left_fan')?.value || 0;
+
             const fanIcon = document.getElementById('fanIcon');
             fanIcon.className = 'fas fa-fan fan-icon' + (isOn ? ' spinning' : '');
             if(isOn) fanIcon.style.animationDuration = (4 - (speed * 0.5)) + 's';
             document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-speed') == speed));
 
-            // Minuteur
-const timer = states.find(s => s.code === 'countdown_left_fan')?.value || 0;
-const timerContainer = document.getElementById('timerContainer');
+            const timerContainer = document.getElementById('timerContainer');
+            if (isOn && timer > 0) {
+                timerContainer.classList.remove('hidden');
+                document.getElementById('timeLeft').innerText = timer;
+            } else {
+                timerContainer.classList.add('hidden');
+            }
 
-// On affiche le badge UNIQUEMENT si le ventilo est allumé ET que le timer est > 0
-if (isOn && timer > 0) {
-    timerContainer.classList.remove('hidden');
-    document.getElementById('timeLeft').innerText = timer;
-} else {
-    timerContainer.classList.add('hidden');
-}
-
-            // Lumière (si visible)
             const mode = states.find(s => s.code === 'work_mode')?.value;
-            const bright = states.find(s => s.code === 'bright_value')?.value;
-            const temp = states.find(s => s.code === 'temp_value')?.value;
-            if(bright) document.getElementById('brightRange').value = bright;
-            if(temp) document.getElementById('tempRange').value = temp;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-mode') === mode));
+            if(mode) document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-mode') === mode));
 
             document.getElementById('status').innerText = 'À JOUR';
         }
@@ -195,13 +204,23 @@ if (isOn && timer > 0) {
     }
 
     async function init() {
-        if (!localStorage.getItem('tuya_id')) return;
+        const tid = localStorage.getItem('tuya_id');
+        const tsec = localStorage.getItem('tuya_secret');
+        
+        if (!tid || !tsec) {
+            showSetup();
+            return;
+        }
+
         const data = await apiCall({ action: 'listDevices' });
         if (data.success) {
             const select = document.getElementById('deviceSelect');
             select.innerHTML = data.result.map(d => `<option value="${d.id}">${d.name.toUpperCase()}</option>`).join('');
             refreshStatus();
             setInterval(refreshStatus, 10000);
+        } else {
+            alert("Erreur API : Vérifiez vos identifiants.");
+            showSetup();
         }
     }
 
