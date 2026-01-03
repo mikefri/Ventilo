@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     const accessSecret = req.body?.accessSecret || req.query?.accessSecret;
     const { action, deviceId, code, value } = req.body || req.query;
 
-    if (!accessId || !accessSecret) return res.status(400).json({ success: false, error: "Cles manquantes" });
+    if (!accessId || !accessSecret) return res.status(400).json({ success: false, error: "Missing keys" });
 
     const t = Date.now().toString();
     const baseUrl = "https://openapi.tuyaeu.com";
@@ -16,9 +16,10 @@ export default async function handler(req, res) {
     try {
         // --- 1. OBTENTION DU TOKEN ---
         const tokenPath = "/v1.0/token?grant_type=1";
-        // Pour le token, le corps est vide, donc le hash est fixe
-        const tokenContentHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        const tokenContentHash = crypto.SHA256("").toString();
         const tokenStringToSign = ["GET", tokenContentHash, "", tokenPath].join("\n");
+        
+        // Ordre strict Tuya : AccessID + Timestamp + StringToSign
         const tokenSign = crypto.HmacSHA256(accessId + t + tokenStringToSign, accessSecret).toString().toUpperCase();
 
         const tokenRes = await axios.get(baseUrl + tokenPath, {
@@ -38,14 +39,20 @@ export default async function handler(req, res) {
         
         const contentHash = crypto.SHA256(bodyStr).toString();
         const stringToSign = [method, contentHash, "", path].join("\n");
+        
+        // Ordre strict Tuya avec Token : AccessID + AccessToken + Timestamp + StringToSign
         const sign = crypto.HmacSHA256(accessId + accessToken + t + stringToSign, accessSecret).toString().toUpperCase();
 
         const result = await axios({
             method,
             url: baseUrl + path,
             headers: {
-                'client_id': accessId, 'access_token': accessToken,
-                'sign': sign, 't': t, 'sign_method': 'HMAC-SHA256', 'Content-Type': 'application/json'
+                'client_id': accessId, 
+                'access_token': accessToken,
+                'sign': sign, 
+                't': t, 
+                'sign_method': 'HMAC-SHA256', 
+                'Content-Type': 'application/json'
             },
             data: bodyStr
         });
