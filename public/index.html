@@ -1,158 +1,166 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#ffffff">
-<link rel="manifest" href="/manifest.json">
-
-<title>Fan Control - Tuya Smart</title>
-<style>
-    :root { 
-        --bg: #f0f3f7; 
-        --card: #ffffff; 
-        --primary: #00d2ff; /* Bleu cyan pour le vent */
-        --primary-dark: #00a8cc;
-        --success: #2ecc71; 
-        --danger: #ff6b6b; 
-        --text: #2c3e50; 
-        --soft: #95a5a6; 
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#00d2ff">
     
-    body { 
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-        background: var(--bg); 
-        color: var(--text); 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        padding: 20px; 
-        margin: 0; 
-        transition: 0.5s; 
-        min-height: 100vh;
-    }
-    
-    body.status-off { filter: grayscale(0.9); opacity: 0.8; }
+    <link rel="manifest" href="/manifest.json">
 
-    .card { 
-        background: var(--card); 
-        padding: 25px; 
-        border-radius: 24px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-        width: 100%; 
-        max-width: 400px; 
-        text-align: center; 
-        margin-bottom: 15px; 
-        position: relative; 
-        box-sizing: border-box; 
-    }
+    <title>Fan Control - Tuya Smart</title>
+    <style>
+        :root { 
+            --bg: #f0f3f7; 
+            --card: #ffffff; 
+            --primary: #00d2ff; 
+            --primary-dark: #00a8cc;
+            --success: #2ecc71; 
+            --danger: #ff6b6b; 
+            --text: #2c3e50; 
+            --soft: #95a5a6; 
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            margin: 0; 
+            transition: 0.5s; 
+            min-height: 100vh;
+        }
+        
+        body.status-off { filter: grayscale(0.9); opacity: 0.8; }
 
-    /* Animation du ventilateur */
-    .fan-visual {
-        width: 120px;
-        height: 120px;
-        margin: 20px auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 80px;
-        color: var(--primary);
-        transition: color 0.3s;
-    }
-    
-    .spinning {
-        animation: rotate var(--spin-speed, 2s) linear infinite;
-    }
+        .card { 
+            background: var(--card); 
+            padding: 25px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            position: relative; 
+            box-sizing: border-box; 
+        }
 
-    .reverse-spin {
-        animation: rotate-rev var(--spin-speed, 2s) linear infinite;
-    }
+        /* Animation du ventilateur */
+        .fan-visual {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            color: var(--primary);
+            transition: color 0.3s;
+            position: relative;
+        }
+        
+        .spinning { animation: rotate var(--spin-speed, 2s) linear infinite; }
+        .reverse-spin { animation: rotate-rev var(--spin-speed, 2s) linear infinite; }
 
-    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes rotate-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes rotate-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
 
-    .status-badge {
-        display: inline-block;
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .badge-on { background: rgba(46, 204, 113, 0.15); color: var(--success); border: 1px solid var(--success); }
-    .badge-off { background: rgba(149, 165, 166, 0.15); color: var(--soft); border: 1px solid var(--soft); }
+        /* Spinner de chargement */
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 210, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin-loading 0.8s linear infinite;
+            position: absolute;
+        }
+        @keyframes spin-loading { to { transform: rotate(360deg); } }
+        .is-loading .loading-spinner { display: block; }
+        .is-loading #fan-icon { opacity: 0.2; }
 
-    .section-title { 
-        font-size: 0.75rem; 
-        color: var(--soft); 
-        text-transform: uppercase; 
-        letter-spacing: 1px; 
-        margin: 20px 0 10px; 
-        text-align: left; 
-        font-weight: bold; 
-        border-left: 3px solid var(--primary); 
-        padding-left: 10px; 
-    }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .badge-on { background: rgba(46, 204, 113, 0.15); color: var(--success); border: 1px solid var(--success); }
+        .badge-off { background: rgba(149, 165, 166, 0.15); color: var(--soft); border: 1px solid var(--soft); }
 
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+        .section-title { 
+            font-size: 0.75rem; 
+            color: var(--soft); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin: 20px 0 10px; 
+            text-align: left; 
+            font-weight: bold; 
+            border-left: 3px solid var(--primary); 
+            padding-left: 10px; 
+        }
 
-    .btn { 
-        padding: 12px; 
-        border-radius: 12px; 
-        border: none; 
-        font-weight: 600; 
-        cursor: pointer; 
-        font-size: 0.85rem; 
-        transition: all 0.2s; 
-        background: #f4f6f8; 
-        color: var(--text); 
-    }
-    
-    .btn:active { transform: scale(0.96); }
-    .btn-active { 
-        background: var(--primary) !important; 
-        color: white !important; 
-        box-shadow: 0 4px 12px rgba(0, 210, 255, 0.3); 
-    }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
 
-    .btn-pwr { grid-column: span 1; padding: 15px; font-size: 1rem; }
-    .btn-pwr.on { background: rgba(46, 204, 113, 0.2); color: var(--success); }
-    .btn-pwr.off { background: rgba(255, 107, 107, 0.2); color: var(--danger); }
+        .btn { 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: none; 
+            font-weight: 600; 
+            cursor: pointer; 
+            font-size: 0.85rem; 
+            transition: all 0.2s; 
+            background: #f4f6f8; 
+            color: var(--text); 
+            touch-action: manipulation;
+        }
+        
+        .btn:active { transform: scale(0.96); }
+        .btn-active { 
+            background: var(--primary) !important; 
+            color: white !important; 
+            box-shadow: 0 4px 12px rgba(0, 210, 255, 0.3); 
+        }
 
-    /* Configuration Inputs */
-    .config-input-group { margin-bottom: 12px; }
-    .card input {
-        width: 100%; padding: 14px; border-radius: 12px;
-        border: 2px solid #e3f2fd; background: #fdfeff;
-        font-size: 0.9rem; box-sizing: border-box; outline: none; transition: 0.3s;
-    }
-    .card input:focus { border-color: var(--primary); background: #fff; }
+        .btn-pwr.on { background: rgba(46, 204, 113, 0.2); color: var(--success); }
+        .btn-pwr.off { background: rgba(255, 107, 107, 0.2); color: var(--danger); }
 
-    #timer-display { font-size: 2rem; font-weight: 800; color: var(--text); margin: 5px 0; }
-    #timer-sub { font-size: 0.8rem; color: var(--soft); }
-
-</style>
+        #timer-display { font-size: 2rem; font-weight: 800; color: var(--text); margin: 5px 0; }
+        
+        /* Config inputs */
+        .card input {
+            width: 100%; padding: 14px; border-radius: 12px; margin-bottom: 10px;
+            border: 2px solid #e3f2fd; box-sizing: border-box; outline: none;
+        }
+    </style>
 </head>
 <body>
 
-    <div id="status-msg" style="font-size: 0.7rem; margin-bottom: 5px; color: var(--soft);">Connexion...</div>
+    <div id="status-msg" style="font-size: 0.7rem; margin-bottom: 5px; color: var(--soft);">Prêt</div>
 
     <div class="card" id="main-ui">
-        
         <div id="status-badge" class="status-badge badge-off">Déconnecté</div>
 
-        <div class="fan-visual">
-            <div id="fan-icon">☢</div> </div>
+        <div class="fan-visual" id="fan-container">
+            <div id="fan-icon">☢</div>
+            <div class="loading-spinner"></div>
+        </div>
 
         <div id="timer-display">--</div>
-        <div id="timer-sub">Minuterie</div>
+        <div id="timer-sub" style="font-size: 0.8rem; color: var(--soft);">Minuterie</div>
 
         <div class="section-title">Alimentation</div>
         <div class="grid">
@@ -170,13 +178,13 @@
             <button class="btn" id="spd-6" onclick="runCommand('fan_speed', 6)">6</button>
         </div>
 
-        <div class="section-title">Contrôle & Minuteur</div>
+        <div class="section-title">Direction & Minuteur</div>
         <div class="grid">
-            <button class="btn" id="dir-forward" onclick="runCommand('fan_direction', 'forward')">🔄 Été (Normal)</button>
-            <button class="btn" id="dir-reverse" onclick="runCommand('fan_direction', 'reverse')">🔁 Hiver (Inversé)</button>
+            <button class="btn" id="dir-forward" onclick="runCommand('fan_direction', 'forward')">🔄 Été</button>
+            <button class="btn" id="dir-reverse" onclick="runCommand('fan_direction', 'reverse')">🔁 Hiver</button>
         </div>
         <div class="grid-3" style="margin-top: 10px;">
-            <button class="btn" onclick="runCommand('countdown_left_fan', 0)">Stop Time</button>
+            <button class="btn" onclick="runCommand('countdown_left_fan', 0)">Stop</button>
             <button class="btn" onclick="runCommand('countdown_left_fan', 60)">+1h</button>
             <button class="btn" onclick="runCommand('countdown_left_fan', 120)">+2h</button>
         </div>
@@ -185,21 +193,23 @@
     </div>
 
     <div class="card" id="config-section" style="display:none;">
-        <h3 style="margin-top:0; color:var(--primary);">Configuration Tuya Cloud</h3>
-        <p style="font-size: 0.8rem; color: var(--soft); margin-bottom: 20px;">Entrez vos identifiants développeur Tuya IoT.</p>
-
-        <div class="config-input-group"><input type="text" id="cfg-id" placeholder="👤 Access ID"></div>
-        <div class="config-input-group"><input type="password" id="cfg-sec" placeholder="🔐 Access Secret"></div>
-        <div class="config-input-group"><input type="text" id="cfg-dev" placeholder="🆔 Device ID"></div>
-        
-        <button class="btn btn-active" style="width:100%; padding: 16px; margin-top: 10px;" onclick="saveConfig()">ENREGISTRER</button>
-        <button class="btn" style="width:100%; margin-top:12px;" onclick="toggleView(false)">RETOUR</button>
+        <h3 style="color:var(--primary);">Tuya Cloud Config</h3>
+        <input type="text" id="cfg-id" placeholder="Access ID">
+        <input type="password" id="cfg-sec" placeholder="Access Secret">
+        <input type="text" id="cfg-dev" placeholder="Device ID">
+        <button class="btn btn-active" style="width:100%; padding: 16px;" onclick="saveConfig()">ENREGISTRER</button>
+        <button class="btn" style="width:100%; margin-top:10px;" onclick="toggleView(false)">RETOUR</button>
     </div>
 
 <script>
     let deviceStates = {};
 
-    // --- API & LOGIC ---
+    // --- SERVICE WORKER REGISTRATION ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Error', err));
+        });
+    }
 
     async function fetchDeviceStatus() {
         const id = localStorage.getItem('tuya_id');
@@ -217,72 +227,42 @@
                 })
             });
             const data = await response.json();
-            if (data.success) { 
-                updateUI(data.result); 
-                document.getElementById('status-msg').innerText = "Connecté • MAJ: " + new Date().toLocaleTimeString();
-            }
-        } catch (e) { document.getElementById('status-msg').innerText = "Erreur de connexion"; }
+            if (data.success) updateUI(data.result);
+        } catch (e) { document.getElementById('status-msg').innerText = "Erreur Sync"; }
     }
 
     function updateUI(statusArray) {
-        // Mapping des résultats API vers notre state local
         statusArray.forEach(item => {
             deviceStates[item.code] = item.value;
 
-            // 1. FAN SWITCH (ON/OFF)
             if (item.code === 'fan_switch') {
                 const isOn = item.value;
                 const badge = document.getElementById('status-badge');
                 const icon = document.getElementById('fan-icon');
+                badge.innerText = isOn ? "EN MARCHE" : "À L'ARRÊT";
+                badge.className = "status-badge " + (isOn ? "badge-on" : "badge-off");
+                document.body.classList.toggle('status-off', !isOn);
                 
-                if (isOn) {
-                    badge.innerText = "EN MARCHE";
-                    badge.className = "status-badge badge-on";
-                    document.body.classList.remove('status-off');
-                    
-                    // Ajout de l'animation si on est sur 'forward' ou 'reverse'
-                    const dir = deviceStates['fan_direction'] || 'forward';
-                    icon.classList.remove('spinning', 'reverse-spin');
-                    icon.classList.add(dir === 'forward' ? 'spinning' : 'reverse-spin');
-                } else {
-                    badge.innerText = "À L'ARRÊT";
-                    badge.className = "status-badge badge-off";
-                    document.body.classList.add('status-off');
-                    icon.classList.remove('spinning', 'reverse-spin');
-                }
+                const dir = deviceStates['fan_direction'] || 'forward';
+                icon.className = isOn ? (dir === 'forward' ? 'spinning' : 'reverse-spin') : '';
             }
 
-            // 2. FAN SPEED (1-6)
             if (item.code === 'fan_speed') {
-                // Reset boutons
                 document.querySelectorAll('[id^="spd-"]').forEach(b => b.classList.remove('btn-active'));
-                // Active le bon bouton
                 document.getElementById('spd-' + item.value)?.classList.add('btn-active');
-                
-                // Ajustement vitesse animation CSS (Speed 6 = 0.5s, Speed 1 = 2s)
                 const animSpeed = 2.2 - (item.value * 0.3); 
                 document.querySelector('.fan-visual').style.setProperty('--spin-speed', animSpeed + 's');
             }
 
-            // 3. FAN DIRECTION
             if (item.code === 'fan_direction') {
                 document.getElementById('dir-forward').classList.toggle('btn-active', item.value === 'forward');
                 document.getElementById('dir-reverse').classList.toggle('btn-active', item.value === 'reverse');
-                
-                // Mise à jour immédiate de l'animation si allumé
-                if(deviceStates['fan_switch']) {
-                    const icon = document.getElementById('fan-icon');
-                    icon.classList.remove('spinning', 'reverse-spin');
-                    icon.classList.add(item.value === 'forward' ? 'spinning' : 'reverse-spin');
-                }
             }
 
-            // 4. COUNTDOWN
             if (item.code === 'countdown_left_fan') {
                 const val = item.value;
                 const display = document.getElementById('timer-display');
                 if (val > 0) {
-                    // Conversion min -> H:MM
                     const h = Math.floor(val / 60);
                     const m = val % 60;
                     display.innerText = `${h}h ${m < 10 ? '0'+m : m}`;
@@ -296,30 +276,29 @@
     }
 
     async function runCommand(code, value) {
+        const container = document.getElementById('fan-container');
+        container.classList.add('is-loading');
         document.getElementById('status-msg').innerText = "Envoi...";
+
         try {
             const res = await fetch('/api/control', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    action: 'sendCommand', 
-                    code: code, 
-                    value: value,
+                    action: 'sendCommand', code, value,
                     accessId: localStorage.getItem('tuya_id'), 
                     accessSecret: localStorage.getItem('tuya_secret'), 
                     deviceId: localStorage.getItem('tuya_device')
                 })
             });
             const data = await res.json();
-            if (data.success) { 
-                document.getElementById('status-msg').innerText = "Succès";
-                setTimeout(fetchDeviceStatus, 500); // Rafraîchir pour confirmer
-            }
-        } catch (e) { document.getElementById('status-msg').innerText = "Erreur envoi"; }
+            if (data.success) setTimeout(fetchDeviceStatus, 500);
+        } catch (e) { document.getElementById('status-msg').innerText = "Erreur"; }
+        finally { container.classList.remove('is-loading'); }
     }
 
-    function toggleView(showConfig) { 
-        document.getElementById('main-ui').style.display = showConfig ? 'none' : 'block'; 
-        document.getElementById('config-section').style.display = showConfig ? 'block' : 'none'; 
+    function toggleView(show) { 
+        document.getElementById('main-ui').style.display = show ? 'none' : 'block'; 
+        document.getElementById('config-section').style.display = show ? 'block' : 'none'; 
     }
     
     function saveConfig() { 
@@ -329,21 +308,10 @@
         location.reload(); 
     }
 
-    // INIT
     if (localStorage.getItem('tuya_id')) { 
         fetchDeviceStatus(); 
-        setInterval(fetchDeviceStatus, 10000); // Poll toutes les 10s
-    } else { 
-        toggleView(true); 
-    }
-    // --- SERVICE WORKER REGISTRATION ---
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW Registered!'))
-            .catch(err => console.log('SW Register Error', err));
-    });
-}
+        setInterval(fetchDeviceStatus, 15000); 
+    } else { toggleView(true); }
 </script>
 </body>
 </html>
