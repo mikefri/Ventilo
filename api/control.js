@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
     const { action, accessId, accessSecret, deviceId, code, value } = req.body || {};
     const t = Date.now().toString();
-    const baseUrl = "https://openapi.tuyawen.com"; // Correction du "v" en trop ici
+    const baseUrl = "https://openapi.tuyawen.com";
    
     const signRequest = (method, path, body = '', token = '') => {
         const contentHash = crypto.SHA256(body).toString();
@@ -16,24 +16,20 @@ export default async function handler(req, res) {
     };
 
     try {
-        // 1. OBTENTION DU TOKEN
         const tokenPath = "/v1.0/token?grant_type=1";
         const tokenSign = signRequest("GET", tokenPath);
         const tokenResponse = await axios.get(`${baseUrl}${tokenPath}`, {
             headers: { 'client_id': accessId, 'sign': tokenSign, 't': t, 'sign_method': 'HMAC-SHA256' }
         });
 
-        if (!tokenResponse.data || !tokenResponse.data.result) {
-            return res.json({ success: false, msg: "Erreur Auth Tuya", detail: tokenResponse.data });
+        // Si l'auth échoue, on renvoie l'erreur exacte de Tuya
+        if (!tokenResponse.data.success) {
+            return res.json({ success: false, msg: "Tuya Refuse l'accès", detail: tokenResponse.data });
         }
 
         const accessToken = tokenResponse.data.result.access_token;
 
-        // 2. LOGIQUE DES ACTIONS
-        let path = (action === 'listDevices') 
-            ? "/v1.0/iot-01/associated-users/devices?size=50" 
-            : `/v1.0/devices/${deviceId}/commands`;
-        
+        let path = (action === 'listDevices') ? "/v1.0/iot-01/associated-users/devices?size=50" : `/v1.0/devices/${deviceId}/commands`;
         let method = (action === 'listDevices') ? "GET" : "POST";
         let body = (action === 'listDevices') ? "" : JSON.stringify({ commands: [{ code, value }] });
 
@@ -50,7 +46,6 @@ export default async function handler(req, res) {
 
         return res.json(result.data);
     } catch (error) {
-        // Renvoie l'erreur réelle pour le débug
-        return res.status(500).json({ success: false, error: error.message, stack: error.response?.data });
+        return res.status(500).json({ success: false, error: error.message });
     }
 }
