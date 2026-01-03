@@ -7,97 +7,76 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent-color: #38bdf8;
-            --text-main: #f8fafc;
-        }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; display: flex; align-items: center; }
-        .container { max-width: 450px; }
-        .main-card { background: var(--card-bg); border-radius: 30px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); }
-        .status-badge { font-size: 0.75rem; padding: 5px 12px; border-radius: 20px; background: rgba(56, 189, 248, 0.1); color: var(--accent-color); }
-        .control-group { background: rgba(255,255,255,0.03); border-radius: 20px; padding: 15px; margin-bottom: 20px; }
-        .group-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 15px; display: block; }
-        .btn-power { height: 60px; border-radius: 15px; font-weight: bold; font-size: 1.1rem; transition: 0.3s; border: none; }
-        .btn-on { background: linear-gradient(135deg, #0ea5e9, #2dd4bf); color: white; }
-        .btn-off { background: #334155; color: #94a3b8; }
-        .speed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .btn-speed { background: #334155; border: none; color: white; padding: 10px; border-radius: 12px; font-weight: 600; }
-        .btn-speed.active { background: var(--accent-color); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
-        .btn-light { background: #f59e0b; color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; }
-        .btn-light.off { background: #334155; color: #94a3b8; }
-        .hidden { display: none; }
-        select.form-select { background-color: #334155; border: none; color: white; border-radius: 10px; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; min-height: 100vh; display: flex; align-items: center; }
+        .main-card { background: var(--card); border-radius: 25px; padding: 25px; width: 100%; max-width: 400px; margin: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .control-group { background: rgba(255,255,255,0.03); border-radius: 15px; padding: 15px; margin-bottom: 15px; }
+        .group-title { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; display: block; font-weight: bold; }
+        .btn-speed { background: #334155; border: none; color: white; padding: 10px; border-radius: 10px; transition: 0.2s; }
+        .btn-speed:active, .btn-speed.active { background: var(--accent); }
+        .hidden { display: none !important; }
+        #status { font-size: 0.8rem; border-radius: 20px; padding: 4px 12px; background: rgba(56,189,248,0.1); color: var(--accent); }
+        .form-select { background: #334155; color: white; border: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="configScreen" class="main-card hidden">
-        <h3 class="text-center mb-4">Configuration</h3>
-        <input type="text" id="accessId" class="form-control mb-2 p-3 bg-dark text-white border-0" placeholder="Access ID">
-        <input type="password" id="accessSecret" class="form-control mb-4 p-3 bg-dark text-white border-0" placeholder="Access Secret">
-        <button onclick="saveConfig()" class="btn btn-primary w-100 p-3 rounded-3">Se connecter</button>
+    <div id="configScreen" class="main-card hidden text-center">
+        <h4 class="mb-4">Configuration Tuya</h4>
+        <input type="text" id="accessId" class="form-control mb-2 bg-dark text-white border-0" placeholder="Access ID">
+        <input type="password" id="accessSecret" class="form-control mb-4 bg-dark text-white border-0" placeholder="Access Secret">
+        <button onclick="saveConfig()" class="btn btn-primary w-100 p-3">Se connecter</button>
     </div>
 
     <div id="controlScreen" class="main-card hidden">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <span class="status-badge" id="status"><i class="fas fa-circle-notch fa-spin me-2"></i>Synchro...</span>
-            </div>
-            <button onclick="clearConfig()" class="btn btn-sm text-white-50"><i class="fas fa-cog"></i></button>
+            <span id="status"><i class="fas fa-sync fa-spin me-2"></i>Chargement...</span>
+            <button onclick="clearConfig()" class="btn btn-sm text-white-50"><i class="fas fa-power-off"></i></button>
         </div>
 
-        <select id="deviceSelect" class="form-select mb-4"></select>
+        <select id="deviceSelect" class="form-select mb-4" onchange="updateUI()"></select>
 
         <div class="control-group">
-            <span class="group-title">Alimentation</span>
-            <div class="row g-2">
-                <div class="col-6"><button onclick="send('fan_switch', true)" class="btn btn-power btn-on w-100"><i class="fas fa-power-off me-2"></i>ON</button></div>
-                <div class="col-6"><button onclick="send('fan_switch', false)" class="btn btn-power btn-off w-100">OFF</button></div>
+            <span class="group-title">Ventilation</span>
+            <div class="row g-2 mb-3">
+                <div class="col-6"><button onclick="send('fan_switch', true)" class="btn btn-primary w-100 p-3 fw-bold">ON</button></div>
+                <div class="col-6"><button onclick="send('fan_switch', false)" class="btn btn-secondary w-100 p-3">OFF</button></div>
+            </div>
+            <div class="row row-cols-3 g-2">
+                <button onclick="send('fan_speed', 1)" class="btn btn-speed">1</button>
+                <button onclick="send('fan_speed', 2)" class="btn btn-speed">2</button>
+                <button onclick="send('fan_speed', 3)" class="btn btn-speed">3</button>
+                <button onclick="send('fan_speed', 4)" class="btn btn-speed">4</button>
+                <button onclick="send('fan_speed', 5)" class="btn btn-speed">5</button>
+                <button onclick="send('fan_speed', 6)" class="btn btn-speed">MAX</button>
             </div>
         </div>
 
-        <div class="control-group">
+        <div id="lightSection" class="control-group hidden">
             <span class="group-title">Lumière</span>
             <div class="row g-2">
-                <div class="col-6"><button id="lightOn" onclick="send('switch_led', true)" class="btn btn-light w-100"><i class="fas fa-lightbulb me-2"></i>ON</button></div>
-                <div class="col-6"><button id="lightOff" onclick="send('switch_led', false)" class="btn btn-light off w-100">OFF</button></div>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <span class="group-title">Vitesse du vent</span>
-            <div class="speed-grid">
-                <button onclick="send('fan_speed', 1)" class="btn-speed">1</button>
-                <button onclick="send('fan_speed', 2)" class="btn-speed">2</button>
-                <button onclick="send('fan_speed', 3)" class="btn-speed">3</button>
-                <button onclick="send('fan_speed', 4)" class="btn-speed">4</button>
-                <button onclick="send('fan_speed', 5)" class="btn-speed">5</button>
-                <button onclick="send('fan_speed', 6)" class="btn-speed active">MAX</button>
+                <div class="col-6"><button onclick="send('switch_led', true)" class="btn btn-warning w-100 p-3 fw-bold text-white"><i class="fas fa-lightbulb me-2"></i>ON</button></div>
+                <div class="col-6"><button onclick="send('switch_led', false)" class="btn btn-secondary w-100 p-3">OFF</button></div>
             </div>
         </div>
 
         <div class="control-group mb-0">
-            <span class="group-title">Options</span>
+            <span class="group-title">Direction des pales</span>
             <div class="row g-2">
-                <div class="col-6"><button onclick="send('fan_direction', 'forward')" class="btn btn-speed w-100"><i class="fas fa-arrow-down me-2"></i>Été</button></div>
-                <div class="col-6"><button onclick="send('fan_direction', 'reverse')" class="btn btn-speed w-100"><i class="fas fa-arrow-up me-2"></i>Hiver</button></div>
+                <div class="col-6"><button onclick="send('fan_direction', 'forward')" class="btn btn-speed w-100">Été (Bas)</button></div>
+                <div class="col-6"><button onclick="send('fan_direction', 'reverse')" class="btn btn-speed w-100">Hiver (Haut)</button></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const statusEl = document.getElementById('status');
-
     function saveConfig() {
         localStorage.setItem('tuya_id', document.getElementById('accessId').value);
         localStorage.setItem('tuya_secret', document.getElementById('accessSecret').value);
         location.reload();
     }
-
     function clearConfig() { if(confirm("Déconnexion ?")) { localStorage.clear(); location.reload(); } }
 
     async function apiCall(data) {
@@ -113,34 +92,41 @@
         return await res.json();
     }
 
+    async function updateUI() {
+        const deviceId = document.getElementById('deviceSelect').value;
+        if(!deviceId) return;
+        document.getElementById('status').innerHTML = '<i class="fas fa-sync fa-spin"></i> Vérification...';
+        
+        const data = await apiCall({ action: 'getSchema', deviceId });
+        const lightSection = document.getElementById('lightSection');
+        
+        if (data.success) {
+            // On vérifie si switch_led est présent dans les fonctions
+            const hasLight = (data.result.functions || []).some(f => f.code === 'switch_led');
+            hasLight ? lightSection.classList.remove('hidden') : lightSection.classList.add('hidden');
+            document.getElementById('status').innerHTML = '<i class="fas fa-check-circle"></i> Connecté';
+        }
+    }
+
     async function init() {
         if (!localStorage.getItem('tuya_id')) return document.getElementById('configScreen').classList.remove('hidden');
         document.getElementById('controlScreen').classList.remove('hidden');
         
         const data = await apiCall({ action: 'listDevices' });
         if (data.success) {
-            const devices = data.result.devices || data.result;
-            document.getElementById('deviceSelect').innerHTML = devices.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-            statusEl.innerHTML = '<i class="fas fa-check-circle me-2"></i>Connecté';
-        } else {
-            statusEl.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Erreur';
+            const select = document.getElementById('deviceSelect');
+            select.innerHTML = data.result.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            updateUI();
         }
     }
 
     async function send(code, value) {
         const deviceId = document.getElementById('deviceSelect').value;
-        statusEl.innerHTML = '<i class="fas fa-sync fa-spin me-2"></i>Envoi...';
-        
-        // Mise en évidence visuelle immédiate des boutons de vitesse
-        if(code === 'fan_speed') {
-            document.querySelectorAll('.btn-speed').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-
+        document.getElementById('status').innerHTML = '<i class="fas fa-paper-plane"></i> Envoi...';
         const data = await apiCall({ action: 'send', deviceId, code, value });
         if (data.success) {
-            statusEl.innerHTML = '<i class="fas fa-check-circle me-2"></i>Confirmé';
-            setTimeout(() => { statusEl.innerHTML = '<i class="fas fa-check-circle me-2"></i>Connecté'; }, 2000);
+            document.getElementById('status').innerHTML = '<i class="fas fa-check-circle"></i> Reçu';
+            setTimeout(() => { document.getElementById('status').innerHTML = '<i class="fas fa-check-circle"></i> Connecté'; }, 1500);
         }
     }
 
