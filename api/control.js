@@ -75,7 +75,7 @@ export default async function handler(req, res) {
         
         // Filtrage spécifique pour la liste
         if (action === 'listDevices' && result.data.success) {
-            const fans = result.data.result.devices.filter(d => d.category === 'fs');
+            const fans = result.data.result.devices.filter(d => ['fs', 'cf', 'kj'].includes(d.category));
             return res.json({ success: true, result: fans });
         }
 
