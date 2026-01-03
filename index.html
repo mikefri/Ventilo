@@ -3,69 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Ventilo Pro</title>
+    <title>Ventilo Mika Pro</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
-        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; min-height: 100vh; display: flex; align-items: center; }
-        .main-card { background: var(--card); border-radius: 25px; padding: 25px; width: 100%; max-width: 400px; margin: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        .control-group { background: rgba(255,255,255,0.03); border-radius: 15px; padding: 15px; margin-bottom: 15px; }
-        .group-title { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; display: block; font-weight: bold; }
-        .btn-speed { background: #334155; border: none; color: white; padding: 10px; border-radius: 10px; transition: 0.2s; }
-        .btn-speed:active, .btn-speed.active { background: var(--accent); }
+        :root {
+            --primary: #4361ee;
+            --accent: #4895ef;
+            --bg: #f0f4f8;
+            --card-white: #ffffff;
+            --text-dark: #2b2d42;
+            --text-muted: #8d99ae;
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            color: var(--text-dark);
+            font-family: 'Inter', -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 35px;
+            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+            margin: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .status-pill {
+            font-size: 0.8rem;
+            padding: 6px 16px;
+            border-radius: 50px;
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            font-weight: 600;
+        }
+
+        .control-section {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .form-select {
+            border: none;
+            background-color: white;
+            font-weight: 700;
+            padding: 12px;
+            border-radius: 15px;
+            color: var(--primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* BOUTONS */
+        .btn-custom {
+            border-radius: 18px;
+            padding: 14px;
+            font-weight: 700;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-on { background: var(--primary); color: white; }
+        .btn-off { background: #edf2f4; color: #8d99ae; }
+        .btn-light-on { background: #ffbe0b; color: white; }
+        
+        .speed-btn {
+            background: #f8f9fa;
+            border: 1px solid #edf2f4;
+            color: var(--text-dark);
+            border-radius: 14px;
+            font-weight: 700;
+            height: 50px;
+        }
+        .speed-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 8px 15px rgba(67, 97, 238, 0.3);
+        }
+
         .hidden { display: none !important; }
-        #status { font-size: 0.8rem; border-radius: 20px; padding: 4px 12px; background: rgba(56,189,248,0.1); color: var(--accent); }
-        .form-select { background: #334155; color: white; border: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container py-4">
     <div id="configScreen" class="main-card hidden text-center">
-        <h4 class="mb-4">Configuration Tuya</h4>
-        <input type="text" id="accessId" class="form-control mb-2 bg-dark text-white border-0" placeholder="Access ID">
-        <input type="password" id="accessSecret" class="form-control mb-4 bg-dark text-white border-0" placeholder="Access Secret">
-        <button onclick="saveConfig()" class="btn btn-primary w-100 p-3">Se connecter</button>
+        <h4 class="mb-4 fw-bold">Configuration</h4>
+        <input type="text" id="accessId" class="form-control mb-3 p-3 rounded-4 shadow-sm border-0" placeholder="Access ID">
+        <input type="password" id="accessSecret" class="form-control mb-4 p-3 rounded-4 shadow-sm border-0" placeholder="Access Secret">
+        <button onclick="saveConfig()" class="btn btn-primary w-100 p-3 rounded-4 fw-bold">Valider</button>
     </div>
 
     <div id="controlScreen" class="main-card hidden">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <span id="status"><i class="fas fa-sync fa-spin me-2"></i>Chargement...</span>
-            <button onclick="clearConfig()" class="btn btn-sm text-white-50"><i class="fas fa-power-off"></i></button>
+            <span id="status" class="status-pill"><i class="fas fa-circle-notch fa-spin me-2"></i>Initialisation...</span>
+            <button onclick="clearConfig()" class="btn btn-link text-muted"><i class="fas fa-sign-out-alt"></i></button>
         </div>
 
         <select id="deviceSelect" class="form-select mb-4" onchange="updateUI()"></select>
 
-        <div class="control-group">
-            <span class="group-title">Ventilation</span>
+        <div class="control-section">
+            <span class="section-label">Moteur</span>
             <div class="row g-2 mb-3">
-                <div class="col-6"><button onclick="send('fan_switch', true)" class="btn btn-primary w-100 p-3 fw-bold">ON</button></div>
-                <div class="col-6"><button onclick="send('fan_switch', false)" class="btn btn-secondary w-100 p-3">OFF</button></div>
+                <div class="col-6"><button onclick="send('fan_switch', true)" class="btn btn-custom btn-on w-100 shadow-sm">ALLUMER</button></div>
+                <div class="col-6"><button onclick="send('fan_switch', false)" class="btn btn-custom btn-off w-100">ÉTEINDRE</button></div>
             </div>
+            
+            <span class="section-label">Vitesse</span>
             <div class="row row-cols-3 g-2">
-                <button onclick="send('fan_speed', 1)" class="btn btn-speed">1</button>
-                <button onclick="send('fan_speed', 2)" class="btn btn-speed">2</button>
-                <button onclick="send('fan_speed', 3)" class="btn btn-speed">3</button>
-                <button onclick="send('fan_speed', 4)" class="btn btn-speed">4</button>
-                <button onclick="send('fan_speed', 5)" class="btn btn-speed">5</button>
-                <button onclick="send('fan_speed', 6)" class="btn btn-speed">MAX</button>
+                <div class="col"><button onclick="sendSpeed(1)" class="btn speed-btn w-100">1</button></div>
+                <div class="col"><button onclick="sendSpeed(2)" class="btn speed-btn w-100">2</button></div>
+                <div class="col"><button onclick="sendSpeed(3)" class="btn speed-btn w-100">3</button></div>
+                <div class="col"><button onclick="sendSpeed(4)" class="btn speed-btn w-100">4</button></div>
+                <div class="col"><button onclick="sendSpeed(5)" class="btn speed-btn w-100">5</button></div>
+                <div class="col"><button onclick="sendSpeed(6)" class="btn speed-btn w-100">MAX</button></div>
             </div>
         </div>
 
-        <div id="lightSection" class="control-group hidden">
-            <span class="group-title">Lumière</span>
+        <div id="lightSection" class="control-section hidden">
+            <span class="section-label">Lumière Intégrée</span>
             <div class="row g-2">
-                <div class="col-6"><button onclick="send('switch_led', true)" class="btn btn-warning w-100 p-3 fw-bold text-white"><i class="fas fa-lightbulb me-2"></i>ON</button></div>
-                <div class="col-6"><button onclick="send('switch_led', false)" class="btn btn-secondary w-100 p-3">OFF</button></div>
+                <div class="col-6"><button onclick="send('switch_led', true)" class="btn btn-custom btn-light-on w-100 shadow-sm"><i class="fas fa-lightbulb me-2"></i>ON</button></div>
+                <div class="col-6"><button onclick="send('switch_led', false)" class="btn btn-custom btn-off w-100">OFF</button></div>
             </div>
         </div>
 
-        <div class="control-group mb-0">
-            <span class="group-title">Direction des pales</span>
+        <div class="control-section mb-0">
+            <span class="section-label">Saison</span>
             <div class="row g-2">
-                <div class="col-6"><button onclick="send('fan_direction', 'forward')" class="btn btn-speed w-100">Été (Bas)</button></div>
-                <div class="col-6"><button onclick="send('fan_direction', 'reverse')" class="btn btn-speed w-100">Hiver (Haut)</button></div>
+                <div class="col-6"><button onclick="send('fan_direction', 'forward')" class="btn speed-btn w-100">ÉTÉ</button></div>
+                <div class="col-6"><button onclick="send('fan_direction', 'reverse')" class="btn speed-btn w-100">HIVER</button></div>
             </div>
         </div>
     </div>
@@ -77,7 +166,7 @@
         localStorage.setItem('tuya_secret', document.getElementById('accessSecret').value);
         location.reload();
     }
-    function clearConfig() { if(confirm("Déconnexion ?")) { localStorage.clear(); location.reload(); } }
+    function clearConfig() { if(confirm("Supprimer les clés ?")) { localStorage.clear(); location.reload(); } }
 
     async function apiCall(data) {
         const res = await fetch('/api/control', {
@@ -95,39 +184,41 @@
     async function updateUI() {
         const deviceId = document.getElementById('deviceSelect').value;
         if(!deviceId) return;
-        document.getElementById('status').innerHTML = '<i class="fas fa-sync fa-spin"></i> Vérification...';
-        
         const data = await apiCall({ action: 'getSchema', deviceId });
         const lightSection = document.getElementById('lightSection');
-        
         if (data.success) {
-            // On vérifie si switch_led est présent dans les fonctions
             const hasLight = (data.result.functions || []).some(f => f.code === 'switch_led');
             hasLight ? lightSection.classList.remove('hidden') : lightSection.classList.add('hidden');
-            document.getElementById('status').innerHTML = '<i class="fas fa-check-circle"></i> Connecté';
+            document.getElementById('status').innerHTML = '<i class="fas fa-check me-2"></i>Connecté';
         }
     }
 
     async function init() {
         if (!localStorage.getItem('tuya_id')) return document.getElementById('configScreen').classList.remove('hidden');
         document.getElementById('controlScreen').classList.remove('hidden');
-        
         const data = await apiCall({ action: 'listDevices' });
         if (data.success) {
             const select = document.getElementById('deviceSelect');
-            select.innerHTML = data.result.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            select.innerHTML = data.result.map(d => `<option value="${d.id}">${d.name.toUpperCase()}</option>`).join('');
             updateUI();
         }
     }
 
     async function send(code, value) {
         const deviceId = document.getElementById('deviceSelect').value;
-        document.getElementById('status').innerHTML = '<i class="fas fa-paper-plane"></i> Envoi...';
+        document.getElementById('status').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>...';
         const data = await apiCall({ action: 'send', deviceId, code, value });
         if (data.success) {
-            document.getElementById('status').innerHTML = '<i class="fas fa-check-circle"></i> Reçu';
-            setTimeout(() => { document.getElementById('status').innerHTML = '<i class="fas fa-check-circle"></i> Connecté'; }, 1500);
+            document.getElementById('status').innerHTML = '<i class="fas fa-check me-2"></i>Reçu';
+            setTimeout(() => { document.getElementById('status').innerHTML = '<i class="fas fa-check me-2"></i>Connecté'; }, 1500);
         }
+    }
+
+    async function sendSpeed(level) {
+        // Gère l'effet visuel sur les boutons de vitesse
+        document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        send('fan_speed', level);
     }
 
     init();
