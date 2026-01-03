@@ -7,83 +7,121 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card { width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .card { width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
         .btn-control { width: 100%; margin-bottom: 12px; padding: 12px; font-weight: 600; border-radius: 10px; }
-        #status { font-size: 0.85rem; text-align: center; margin-bottom: 15px; font-weight: 500; }
-        .status-ok { color: #28a745; }
-        .status-err { color: #dc3545; }
+        .hidden { display: none; }
+        #status { font-size: 0.85rem; text-align: center; margin-bottom: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h4 class="text-center mb-4">Mon Ventilateur</h4>
-    <div id="status">Connexion Tuya Cloud...</div>
+<div id="configScreen" class="card hidden">
+    <h4 class="mb-3 text-center">Configuration Tuya</h4>
+    <p class="text-muted small text-center">Clés stockées localement dans votre navigateur.</p>
+    <div class="mb-3">
+        <label class="form-label">Access ID</label>
+        <input type="text" id="accessId" class="form-control" placeholder="Votre Access ID">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Access Secret</label>
+        <input type="password" id="accessSecret" class="form-control" placeholder="Votre Access Secret">
+    </div>
+    <button onclick="saveConfig()" class="btn btn-primary w-100">Enregistrer</button>
+</div>
+
+<div id="controlScreen" class="card hidden">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0">Mon Ventilateur</h4>
+        <button onclick="clearConfig()" class="btn btn-sm btn-outline-secondary">⚙️</button>
+    </div>
+    
+    <div id="status">Connexion...</div>
     
     <select id="deviceSelect" class="form-select mb-4">
         <option value="">Chargement...</option>
     </select>
 
     <div class="row gx-2">
-        <div class="col-6">
-            <button onclick="send('switch', true)" class="btn btn-primary btn-control">ALLUMER</button>
-        </div>
-        <div class="col-6">
-            <button onclick="send('switch', false)" class="btn btn-danger btn-control">ÉTEINDRE</button>
-        </div>
+        <div class="col-6"><button onclick="send('switch', true)" class="btn btn-primary btn-control">ON</button></div>
+        <div class="col-6"><button onclick="send('switch', false)" class="btn btn-danger btn-control">OFF</button></div>
     </div>
-
     <hr class="my-4">
-
     <button onclick="send('fan_speed_enum', '3')" class="btn btn-outline-primary btn-control">VITESSE 3</button>
-    <button onclick="send('fan_speed_enum', '6')" class="btn btn-outline-primary btn-control">VITESSE MAX (6)</button>
+    <button onclick="send('fan_speed_enum', '6')" class="btn btn-outline-primary btn-control">VITESSE MAX</button>
 </div>
 
 <script>
-    const CONFIG = {
-        accessId: "ftwhcr4egaqh9vrf3daj",
-        accessSecret: "f8f6d5867ff341d08bc8bd91b0f1aa62"
-    };
-
     const statusEl = document.getElementById('status');
 
+    // Gestion du stockage local
+    function saveConfig() {
+        const id = document.getElementById('accessId').value;
+        const secret = document.getElementById('accessSecret').value;
+        if(!id || !secret) return alert("Veuillez remplir les deux champs.");
+        localStorage.setItem('tuya_id', id);
+        localStorage.setItem('tuya_secret', secret);
+        location.reload();
+    }
+
+    function clearConfig() {
+        if(confirm("Supprimer les clés du navigateur ?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    // Appels API
     async function apiCall(data) {
-        // Note le chemin /api/control (Vercel redirige automatiquement vers le dossier api)
+        const payload = {
+            accessId: localStorage.getItem('tuya_id'),
+            accessSecret: localStorage.getItem('tuya_secret'),
+            ...data
+        };
+
         const response = await fetch('/api/control', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...CONFIG, ...data })
+            body: JSON.stringify(payload)
         });
         return await response.json();
     }
 
     async function init() {
+        const id = localStorage.getItem('tuya_id');
+        if (!id) {
+            document.getElementById('configScreen').classList.remove('hidden');
+            return;
+        }
+        
+        document.getElementById('controlScreen').classList.remove('hidden');
+        
         try {
             const data = await apiCall({ action: 'listDevices' });
             if (data.success) {
                 const select = document.getElementById('deviceSelect');
-                select.innerHTML = data.result.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+                const devices = data.result.devices || data.result;
+                select.innerHTML = devices.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
                 statusEl.innerText = "Prêt";
-                statusEl.className = "status-ok";
+                statusEl.style.color = "green";
             } else {
                 statusEl.innerText = "Erreur Tuya : " + data.msg;
-                statusEl.className = "status-err";
+                statusEl.style.color = "red";
             }
         } catch (e) {
             statusEl.innerText = "Erreur de liaison serveur";
-            statusEl.className = "status-err";
+            statusEl.style.color = "red";
         }
     }
 
     async function send(code, value) {
         const deviceId = document.getElementById('deviceSelect').value;
-        if (!deviceId) return;
+        if(!deviceId) return;
         
         statusEl.innerText = "Envoi...";
         try {
             const data = await apiCall({ action: 'send', deviceId, code, value });
             if (data.success) {
-                statusEl.innerText = "Commande envoyée !";
+                statusEl.innerText = "Réussi !";
                 setTimeout(() => { statusEl.innerText = "Prêt"; }, 2000);
             } else {
                 alert("Erreur : " + data.msg);
