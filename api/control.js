@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     }
 
     const t = Date.now().toString();
-    const baseUrl = "https://openapi.tuyawen.com";
+    const baseUrl = "https://openapi.tuyaeu.com";
    
     const signRequest = (method, path, body = '', token = '') => {
         const contentHash = crypto.SHA256(body).toString();
