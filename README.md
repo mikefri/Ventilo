@@ -1,4 +1,4 @@
-# 🌀 Ventilo Remote Premium
+# 🌀 Ventilo Remote
 
 Une application web moderne (**PWA**) pour contrôler vos ventilateurs de plafond compatibles **Tuya Smart / Smart Life**. L'interface est conçue pour être fluide, élégante et installable sur mobile comme une application native.
 
