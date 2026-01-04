@@ -205,9 +205,6 @@
         return await res.json();
     }
 
-    Voici la fonction refreshStatus entièrement réécrite. Elle intègre désormais des messages d'état intelligents, des couleurs dynamiques (Vert pour connecté, Rouge pour erreur, Orange pour la synchro) et gère l'animation du ventilateur.
-
-JavaScript
 
     async function refreshStatus() {
         const deviceId = document.getElementById('deviceSelect').value;
